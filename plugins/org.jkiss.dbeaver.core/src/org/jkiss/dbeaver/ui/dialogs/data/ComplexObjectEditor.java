@@ -39,6 +39,7 @@ import org.jkiss.dbeaver.model.exec.DBCException;
 import org.jkiss.dbeaver.model.exec.DBCExecutionContext;
 import org.jkiss.dbeaver.model.exec.DBCExecutionPurpose;
 import org.jkiss.dbeaver.model.exec.DBCSession;
+import org.jkiss.dbeaver.model.impl.jdbc.data.JDBCArray;
 import org.jkiss.dbeaver.model.runtime.DBRProgressMonitor;
 import org.jkiss.dbeaver.model.runtime.DBRRunnableWithResult;
 import org.jkiss.dbeaver.model.struct.DBSAttributeBase;
@@ -209,6 +210,19 @@ public class ComplexObjectEditor extends TreeViewer {
                 curCellEditor.createControl();
                 if (curCellEditor instanceof IValueEditorStandalone) {
                     ((IValueEditorStandalone) curCellEditor).showValueEditor();
+                    
+                    //update data
+                    Object changeObj = item.getData();
+                    if (changeObj instanceof ArrayItem) {
+                    	ArrayItem arrayItem = (ArrayItem) changeObj;
+                        if (arrayItem.array instanceof JDBCArray) {
+                        	JDBCArray jdbcArray = (JDBCArray)arrayItem.array;
+                        	jdbcArray.setItem(arrayItem.index, valueController.getValue());
+                        }
+                        
+                    }
+                    item.setData(changeObj);
+                    this.refresh();
                 } else if (curCellEditor.getControl() != null) {
                     treeEditor.setEditor(curCellEditor.getControl(), item, 1);
                 }
@@ -260,7 +274,7 @@ public class ComplexObjectEditor extends TreeViewer {
         private final DBDValueHandler valueHandler;
         private final DBSTypedObject type;
         private final String name;
-        private final Object value;
+        private Object value;
         private final EditType editType;
         public ComplexValueController(DBDValueHandler valueHandler, DBSTypedObject type, String name, @Nullable Object value, EditType editType)
         {
@@ -301,6 +315,7 @@ public class ComplexObjectEditor extends TreeViewer {
         public void updateValue(Object value)
         {
             // Do nothing
+        	this.value = value;
         }
 
         @Override
@@ -327,7 +342,7 @@ public class ComplexObjectEditor extends TreeViewer {
         @Override
         public boolean isReadOnly()
         {
-            return true;
+            return false;
         }
 
         @Override
